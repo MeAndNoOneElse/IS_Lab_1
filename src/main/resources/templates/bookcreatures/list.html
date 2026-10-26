@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{_menu :: head}">
+    <title>Список существ</title>
+</head>
+<body>
+<nav th:insert="~{_menu :: nav}"></nav>
+<div class="container">
+    <div th:insert="~{_menu :: flash}"></div>
+    <h2>Книжные существа</h2>
+    <p><span class="ws-status"></span> WebSocket-синхронизация активна (изменения отражаются у всех клиентов).</p>
+    <div id="ajax-message" style="margin-bottom:1rem;"></div>
+
+    <form th:action="@{/bookcreatures}" method="get" style="display:flex;gap:0.5rem;align-items:flex-end;margin-bottom:1rem;flex-wrap:wrap;">
+        <input type="hidden" name="page" th:value="${currentPage}"/>
+        <input type="hidden" name="sort" th:value="${sort}"/>
+        <input type="hidden" name="dir" th:value="${dir}"/>
+        <label>Фильтр</label>
+        <select name="filterColumn">
+            <option value="" th:selected="${filterColumn == null}">(нет)</option>
+            <option value="name" th:selected="${filterColumn == 'name'}">Имя</option>
+            <option value="creatureType" th:selected="${filterColumn == 'creatureType'}">Тип существа</option>
+        </select>
+        <th:block th:if="${filterColumn == 'creatureType'}">
+            <select name="filterValue">
+                <option value="" th:selected="${filterValue == null}">(не указан)</option>
+                <option th:each="type : ${creatureTypes}" th:value="${type.code}" th:text="${type.label}"
+                        th:selected="${type.code eq filterValue}"></option>
+            </select>
+        </th:block>
+        <input th:unless="${filterColumn == 'creatureType'}" name="filterValue" type="text" th:value="${filterValue}"
+               placeholder="точное значение"/>
+        <label>Макс. расстояние от (0,0)</label>
+        <input name="maxDistance" type="number" min="0" step="any" th:value="${maxDistance}"
+               placeholder="расстояние"/>
+        <label>Создан с</label>
+        <input name="creationFrom" type="date" th:value="${creationFrom}"/>
+        <label>по</label>
+        <input name="creationTo" type="date" th:value="${creationTo}"/>
+        <label>Город</label>
+        <select name="creatureLocationId">
+            <option value="" th:selected="${creatureLocationId == null}">(любой)</option>
+            <option th:each="city : ${cities}" th:value="${city.id}" th:text="${city.name}"
+                    th:selected="${city.id.toString() eq creatureLocationId}"></option>
+        </select>
+        <label>Кольцо</label>
+        <select name="ringId">
+            <option value="" th:selected="${ringId == null}">(любое)</option>
+            <option th:each="r : ${rings}" th:value="${r.id}" th:text="${r.name}"
+                    th:selected="${r.id.toString() eq ringId}"></option>
+        </select>
+        <label>Показывать</label>
+        <select name="size" onchange="this.form.submit()">
+            <option value="10" th:selected="${size == 10}">10</option>
+            <option value="25" th:selected="${size == 25}">25</option>
+            <option value="50" th:selected="${size == 50}">50</option>
+            <option value="100" th:selected="${size == 100}">100</option>
+        </select>
+        <button type="submit" class="btn">Применить</button>
+        <a th:href="@{/bookcreatures}" class="btn">Сброс</a>
+    </form>
+
+    <table id="creatures-table">
+        <thead>
+        <tr>
+            <th th:with="nextDir=${dir == 'asc' ? 'desc' : 'asc'}"><a th:href="@{/bookcreatures(page=${currentPage},size=${size},sort='id',dir=${nextDir},filterColumn=${filterColumn},filterValue=${filterValue},maxDistance=${maxDistance},creationFrom=${creationFrom},creationTo=${creationTo},creatureLocationId=${creatureLocationId},ringId=${ringId})}">ID</a></th>
+            <th th:with="nextDir=${dir == 'asc' ? 'desc' : 'asc'}"><a th:href="@{/bookcreatures(page=${currentPage},size=${size},sort='name',dir=${nextDir},filterColumn=${filterColumn},filterValue=${filterValue},maxDistance=${maxDistance},creationFrom=${creationFrom},creationTo=${creationTo},creatureLocationId=${creatureLocationId},ringId=${ringId})}">Имя</a></th>
+            <th th:with="nextDir=${dir == 'asc' ? 'desc' : 'asc'}"><a th:href="@{/bookcreatures(page=${currentPage},size=${size},sort='coordinates.x',dir=${nextDir},filterColumn=${filterColumn},filterValue=${filterValue},maxDistance=${maxDistance},creationFrom=${creationFrom},creationTo=${creationTo},creatureLocationId=${creatureLocationId},ringId=${ringId})}">Координаты (X, Y)</a></th>
+            <th th:with="nextDir=${dir == 'asc' ? 'desc' : 'asc'}"><a th:href="@{/bookcreatures(page=${currentPage},size=${size},sort='creationDate',dir=${nextDir},filterColumn=${filterColumn},filterValue=${filterValue},maxDistance=${maxDistance},creationFrom=${creationFrom},creationTo=${creationTo},creatureLocationId=${creatureLocationId},ringId=${ringId})}">Дата создания</a></th>
+            <th th:with="nextDir=${dir == 'asc' ? 'desc' : 'asc'}"><a th:href="@{/bookcreatures(page=${currentPage},size=${size},sort='age',dir=${nextDir},filterColumn=${filterColumn},filterValue=${filterValue},maxDistance=${maxDistance},creationFrom=${creationFrom},creationTo=${creationTo},creatureLocationId=${creatureLocationId},ringId=${ringId})}">Возраст</a></th>
+            <th th:with="nextDir=${dir == 'asc' ? 'desc' : 'asc'}"><a th:href="@{/bookcreatures(page=${currentPage},size=${size},sort='creatureType',dir=${nextDir},filterColumn=${filterColumn},filterValue=${filterValue},maxDistance=${maxDistance},creationFrom=${creationFrom},creationTo=${creationTo},creatureLocationId=${creatureLocationId},ringId=${ringId})}">Тип</a></th>
+            <th th:with="nextDir=${dir == 'asc' ? 'desc' : 'asc'}"><a th:href="@{/bookcreatures(page=${currentPage},size=${size},sort='creatureLocation.name',dir=${nextDir},filterColumn=${filterColumn},filterValue=${filterValue},maxDistance=${maxDistance},creationFrom=${creationFrom},creationTo=${creationTo},creatureLocationId=${creatureLocationId},ringId=${ringId})}">Местоположение (город)</a></th>
+            <th th:with="nextDir=${dir == 'asc' ? 'desc' : 'asc'}"><a th:href="@{/bookcreatures(page=${currentPage},size=${size},sort='attackLevel',dir=${nextDir},filterColumn=${filterColumn},filterValue=${filterValue},maxDistance=${maxDistance},creationFrom=${creationFrom},creationTo=${creationTo},creatureLocationId=${creatureLocationId},ringId=${ringId})}">Атака</a></th>
+            <th th:with="nextDir=${dir == 'asc' ? 'desc' : 'asc'}"><a th:href="@{/bookcreatures(page=${currentPage},size=${size},sort='defenseLevel',dir=${nextDir},filterColumn=${filterColumn},filterValue=${filterValue},maxDistance=${maxDistance},creationFrom=${creationFrom},creationTo=${creationTo},creatureLocationId=${creatureLocationId},ringId=${ringId})}">Защита</a></th>
+            <th th:with="nextDir=${dir == 'asc' ? 'desc' : 'asc'}"><a th:href="@{/bookcreatures(page=${currentPage},size=${size},sort='ring.name',dir=${nextDir},filterColumn=${filterColumn},filterValue=${filterValue},maxDistance=${maxDistance},creationFrom=${creationFrom},creationTo=${creationTo},creatureLocationId=${creatureLocationId},ringId=${ringId})}">Кольцо</a></th>
+            <th class="actions">Действия</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="item : ${items}" th:id="'row-' + ${item.id}">
+            <td th:text="${item.id}"></td>
+            <td><a th:href="@{/bookcreatures/{id}(id=${item.id})}" th:text="${item.name}"></a></td>
+            <td th:text="${item.coordinates != null ? '(' + item.coordinates.x + ', ' + item.coordinates.y + ')' : '-'}"></td>
+            <td th:text="${item.creationDate}"></td>
+            <td th:text="${item.age}"></td>
+            <td th:text="${item.creatureType}"></td>
+            <td th:text="${item.creatureLocation}"></td>
+            <td th:text="${item.attackLevel}"></td>
+            <td th:text="${item.defenseLevel}"></td>
+            <td th:text="${item.ring}"></td>
+            <td class="actions">
+                <a class="btn" th:href="@{/bookcreatures/{id}(id=${item.id})}">Просмотр</a>
+                <a class="btn" th:href="@{/bookcreatures/{id}/edit(id=${item.id})}">Изменить</a>
+                <a class="btn btn-danger" th:href="@{/bookcreatures/{id}/delete(id=${item.id})}"
+                   onclick="return confirmDelete(this, 'Существо', ${item.id})">Удалить</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        <a th:if="${hasPrev}" th:href="@{/bookcreatures(page=${currentPage-1},size=${size},sort=${sort},dir=${dir},filterColumn=${filterColumn},filterValue=${filterValue},maxDistance=${maxDistance},creationFrom=${creationFrom},creationTo=${creationTo},creatureLocationId=${creatureLocationId},ringId=${ringId})}" class="btn">← Назад</a>
+        <span th:if="${!hasPrev}" class="btn disabled">← Назад</span>
+        <span>Страница <b th:text="${currentPage}"></b> из <b th:text="${totalPages}"></b></span>
+        <a th:if="${hasNext}" th:href="@{/bookcreatures(page=${currentPage+1},size=${size},sort=${sort},dir=${dir},filterColumn=${filterColumn},filterValue=${filterValue},maxDistance=${maxDistance},creationFrom=${creationFrom},creationTo=${creationTo},creatureLocationId=${creatureLocationId},ringId=${ringId})}" class="btn">Вперед →</a>
+        <span th:if="${!hasNext}" class="btn disabled">Вперед →</span>
+    </div>
+    <p><a class="btn" th:href="@{/bookcreatures/new}">+ Создать существо</a></p>
+    <p><a class="btn" th:href="@{/}">Вернуться в меню</a></p>
+</div>
+<script th:insert="~{_menu :: ws-client}"></script>
+<script>
+    function confirmDelete(link, typeName, id) {
+        if (!confirm('Удалить ' + typeName + '?')) {
+            return false;
+        }
+        var deleteUrl = window.location.origin + '/bookcreatures/' + id + '/delete-ajax';
+        fetch(deleteUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            credentials: 'same-origin'
+        }).then(function (resp) {
+            return resp.json();
+        }).then(function (data) {
+            var msg = document.getElementById('ajax-message');
+            var div = document.createElement('div');
+            div.style.padding = '0.75rem';
+            div.style.borderRadius = '4px';
+            div.style.marginBottom = '1rem';
+            if (data.success) {
+                div.style.background = '#d4edda';
+                div.style.color = '#155724';
+                div.textContent = data.message;
+                var row = document.getElementById('row-' + id);
+                if (row) {
+                    row.remove();
+                }
+            } else {
+                div.style.background = '#f8d7da';
+                div.style.color = '#721c24';
+                div.textContent = data.message;
+            }
+            msg.appendChild(div);
+            setTimeout(function () { div.remove(); }, 5000);
+        }).catch(function (err) {
+            var msg = document.getElementById('ajax-message');
+            var div = document.createElement('div');
+            div.style.background = '#f8d7da';
+            div.style.color = '#721c24';
+            div.style.padding = '0.75rem';
+            div.textContent = 'Ошибка при удалении: ' + err;
+            msg.appendChild(div);
+        });
+        return false;
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{_menu :: head}">
+    <title>Главное меню</title>
+</head>
+<body>
+<nav th:insert="~{_menu :: nav}"></nav>
+<div class="container">
+    <div th:insert="~{_menu :: flash}"></div>
+    <h2>Главное меню</h2>
+    <p>Информационная система управления книжными существами (вариант 17).</p>
+    <table>
+        <tr><td style="width: 260px;"><a class="btn btn-success" th:href="@{/bookcreatures/new}">Создать существо</a></td><td>Создание нового BookCreature со ссылкой на существующие координаты, город и кольцо.</td></tr>
+        <tr><td><a class="btn" th:href="@{/bookcreatures}">Список существ (таблица)</a></td><td>Пагинированная таблица с фильтрацией и сортировкой по строгой колонке.</td></tr>
+        <tr><td><a class="btn" th:href="@{/magiccities}">Города магии</a></td><td>Управление волшебными городами (вспомогательные объекты).</td></tr>
+        <tr><td><a class="btn" th:href="@{/rings}">Кольца</a></td><td>Управление кольцами (вспомогательные объекты).</td></tr>
+        <tr><td><a class="btn" th:href="@{/special}">Спецоперации БД</a></td><td>5 функций БД: сумма attackLevel, поиск по имени, уникальные уровни атаки, обмен кольцами, уничтожение городов эльфов.</td></tr>
+    </table>
+</div>
+<script th:insert="~{_menu :: ws-client}"></script>
+</body>
+</html>

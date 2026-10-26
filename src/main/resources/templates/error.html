@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{_menu :: head}">
+    <title>Ошибка</title>
+</head>
+<body>
+<nav th:insert="~{_menu :: nav}"></nav>
+<div class="container">
+    <div th:insert="~{_menu :: flash}"></div>
+    <h2>Ошибка</h2>
+    <div class="flash error" th:text="${errorMessage}"></div>
+    <a class="btn" th:href="@{/}">Вернуться в меню</a>
+</div>
+<script th:insert="~{_menu :: ws-client}"></script>
+</body>
+</html>

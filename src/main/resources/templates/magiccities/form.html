@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{_menu :: head}">
+    <title th:if="${city.id != null}">Редактирование города</title>
+    <title th:unless="${city.id != null}">Создание города</title>
+</head>
+<body>
+<nav th:insert="~{_menu :: nav}"></nav>
+<div class="container">
+    <div th:insert="~{_menu :: flash}"></div>
+    <h2 th:if="${city.id != null}">Редактирование города #<span th:text="${city.id}"></span></h2>
+    <h2 th:unless="${city.id != null}">Создание города</h2>
+    <div th:if="${errorMessage}" class="flash error" th:text="${errorMessage}"></div>
+    <form th:action="${city.id != null ? '/magiccities/' + city.id + '/edit' : '/magiccities/new'}" method="post" th:object="${city}" novalidate>
+        <div class="form-group">
+            <label>Имя <span style="color:#e74c3c;">*</span></label>
+            <input type="text" th:field="*{name}" class="error" th:classappend="${#fields.hasErrors('name')} ? 'error' : ''"/>
+            <div class="error-msg" th:each="err : ${#fields.errors('name')}" th:text="${err}"></div>
+        </div>
+        <div class="form-group">
+            <label>Площадь <span style="color:#e74c3c;">*</span></label>
+            <input type="number" th:field="*{area}" class="error" th:classappend="${#fields.hasErrors('area')} ? 'error' : ''"/>
+            <div class="error-msg" th:each="err : ${#fields.errors('area')}" th:text="${err}"></div>
+        </div>
+        <div class="form-group">
+            <label>Население <span style="color:#e74c3c;">*</span></label>
+            <input type="number" th:field="*{population}" class="error" th:classappend="${#fields.hasErrors('population')} ? 'error' : ''"/>
+            <div class="error-msg" th:each="err : ${#fields.errors('population')}" th:text="${err}"></div>
+        </div>
+        <div class="form-group">
+            <label>Дата основания</label>
+            <input type="date" th:field="*{establishmentDate}" class="error" th:classappend="${#fields.hasErrors('establishmentDate')} ? 'error' : ''"/>
+            <div class="error-msg" th:each="err : ${#fields.errors('establishmentDate')}" th:text="${err}"></div>
+        </div>
+        <div class="form-group">
+            <label>Правитель <span style="color:#e74c3c;">*</span></label>
+            <select th:field="*{governor.code}" class="error" th:classappend="${#fields.hasErrors('governor.code')} ? 'error' : ''">
+                <option th:each="type : ${creatureTypes}" th:value="${type.code}" th:text="${type.label}" th:selected="${city.governor != null and city.governor.code == type.code}"></option>
+            </select>
+            <div class="error-msg" th:each="err : ${#fields.errors('governor.code')}" th:text="${err}"></div>
+        </div>
+        <div class="form-group">
+            <label>Столица <span style="color:#e74c3c;">*</span></label>
+            <select th:field="*{capital}" class="error" th:classappend="${#fields.hasErrors('capital')} ? 'error' : ''">
+                <option value="true">Да</option>
+                <option value="false">Нет</option>
+            </select>
+            <div class="error-msg" th:each="err : ${#fields.errors('capital')}" th:text="${err}"></div>
+        </div>
+        <div class="form-group">
+            <label>Плотность населения <span style="color:#e74c3c;">*</span></label>
+            <input type="number" th:field="*{populationDensity}" class="error" th:classappend="${#fields.hasErrors('populationDensity')} ? 'error' : ''"/>
+            <div class="error-msg" th:each="err : ${#fields.errors('populationDensity')}" th:text="${err}"></div>
+        </div>
+        <button type="submit" class="btn btn-success" formnovalidate>Сохранить</button>
+        <a class="btn" th:href="@{/magiccities}">Отмена</a>
+    </form>
+</div>
+<script th:insert="~{_menu :: ws-client}"></script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{_menu :: head}">
+    <title>Просмотр существа</title>
+</head>
+<body>
+<nav th:insert="~{_menu :: nav}"></nav>
+<div class="container">
+    <div th:insert="~{_menu :: flash}"></div>
+    <h2>Существо #<span th:text="${creature.id}"></span></h2>
+    <table>
+        <tr><th>Имя</th><td th:text="${creature.name}"></td></tr>
+        <tr><th>Координаты X</th><td th:text="${creature.coordinates.x}"></td></tr>
+        <tr><th>Координаты Y</th><td th:text="${creature.coordinates.y}"></td></tr>
+        <tr><th>Дата создания</th><td th:text="${creature.creationDate}"></td></tr>
+        <tr><th>Возраст</th><td th:text="${creature.age}"></td></tr>
+        <tr><th>Тип существа</th><td th:text="${creature.creatureType}"></td></tr>
+        <tr><th>Местоположение (город)</th><td th:text="${creature.creatureLocation}"></td></tr>
+        <tr><th>Уровень атаки</th><td th:text="${creature.attackLevel}"></td></tr>
+        <tr><th>Уровень защиты</th><td th:text="${creature.defenseLevel}"></td></tr>
+        <tr><th>Кольцо</th><td th:text="${creature.ring}"></td></tr>
+    </table>
+    <p>
+        <a class="btn" th:href="@{/bookcreatures/{id}/edit(id=${creature.id})}">Изменить</a>
+        <a class="btn btn-danger" th:href="@{/bookcreatures/{id}/delete(id=${creature.id})}" onclick="return confirm('Удалить существо?')">Удалить</a>
+        <a class="btn" th:href="@{/bookcreatures}">К списку</a>
+    </p>
+    <p><a class="btn" th:href="@{/}">Вернуться в меню</a></p>
+</div>
+<script th:insert="~{_menu :: ws-client}"></script>
+</body>
+</html>

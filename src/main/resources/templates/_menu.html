@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<!-- Фрагмент head: только содержимое, без тега <head> -->
+<th:block th:fragment="head">
+    <meta charset="UTF-8"/>
+    <title>Lab 1 — BookCreature IS</title>
+    <link rel="stylesheet" th:href="@{/static/css/style.css}"/>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f6f8; }
+        header { background: #2c3e50; color: #fff; padding: 1rem 1.5rem; }
+        header h1 { margin: 0; font-size: 1.25rem; }
+        nav ul { list-style: none; padding: 0; margin: 0; display: flex; gap: 1.5rem; background: #34495e; }
+        nav a { color: #ecf0f1; text-decoration: none; padding: 0.75rem; display: block; }
+        nav a:hover { background: #2c3e50; }
+        .container { max-width: 1200px; margin: 1.5rem auto; padding: 0 1rem; }
+        .flash { padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: 4px; }
+        .flash.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .flash.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        table { width: 100%; border-collapse: collapse; background: #fff; margin-top: 1rem; }
+        th, td { border: 1px solid #ddd; padding: 0.6rem; text-align: left; }
+        th { background: #34495e; color: #fff; cursor: pointer; }
+        th a { color: #fff; text-decoration: none; }
+        th a::after { content: " \2192"; font-size: 0.7em; opacity: 0.6; }
+        th.asc a::after { content: " \2191"; }
+        th.desc a::after { content: " \2193"; }
+        td .btn, .btn { display: inline-block; padding: 0.35rem 0.75rem; margin: 0.15rem; background: #3498db; color: #fff; text-decoration: none; border-radius: 4px; font-size: 0.85rem; }
+        .btn:hover { background: #2980b9; }
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-success { background: #27ae60; }
+        .btn-success:hover { background: #219150; }
+        form { background: #fff; padding: 1.5rem; border-radius: 6px; margin-top: 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.35rem; font-weight: 600; }
+        input[type="text"], input[type="number"], input[type="date"], select, textarea {
+            width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
+        }
+        input[type="text"].error, input[type="number"].error, select.error { border-color: #e74c3c; }
+        .error-msg { color: #e74c3c; font-size: 0.85rem; margin-top: 0.25rem; }
+        .pagination { margin-top: 1rem; display: flex; gap: 0.4rem; align-items: center; }
+        .pagination a { padding: 0.35rem 0.7rem; background: #fff; border: 1px solid #ccc; border-radius: 4px; text-decoration: none; color: #34495e; }
+        .pagination a.active { background: #34495e; color: #fff; border-color: #34495e; }
+        .pagination a.disabled { color: #95a5a6; border-color: #bdc3c7; cursor: not-allowed; }
+        .actions { white-space: nowrap; }
+        .ws-status { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #27ae60; margin-right: 6px; }
+    </style>
+    <script th:src="@{/static/js/stomp.min.js}"></script>
+</th:block>
+
+<!-- Фрагмент nav: только содержимое, без тега <nav> -->
+<th:block th:fragment="nav">
+    <ul>
+        <li><a th:href="@{/}">Главное меню</a></li>
+        <li><a th:href="@{/bookcreatures}">Книжные существа</a></li>
+        <li><a th:href="@{/magiccities}">Города магии</a></li>
+        <li><a th:href="@{/rings}">Кольца</a></li>
+        <li><a th:href="@{/special}">Спецоперации БД</a></li>
+    </ul>
+</th:block>
+
+<!-- Фрагмент flash: только содержимое, без тега <div> -->
+<th:block th:fragment="flash">
+    <div th:if="${success}" class="flash success" th:text="${success}"></div>
+    <div th:if="${errorMessage}" class="flash error" th:text="${errorMessage}"></div>
+</th:block>
+
+<!-- Фрагмент ws-client: только JS, без тега <script> -->
+<th:block th:fragment="ws-client" th:inline="javascript">
+    /* WebSocket: подписка на обновления в реальном времени */
+    let stompClient = null;
+    let reconnectTimeout = null;
+
+    // Время (мс), до которого игнорировать свои собственные уведомления (~6 сек).
+    // sessionStorage нужен, чтобы метка пережила редирект после сохранения формы.
+    let ownChangeUntil = 0;
+
+    function markOwnChange() {
+        ownChangeUntil = Date.now() + 6000;
+        sessionStorage.setItem('wsOwnChange', String(ownChangeUntil));
+    }
+
+    function isOwnChange() {
+        if (Date.now() < ownChangeUntil) {
+            return true;
+        }
+        const stored = sessionStorage.getItem('wsOwnChange');
+        if (stored) {
+            const ts = parseInt(stored, 10);
+            if (!isNaN(ts) && Date.now() < ts) {
+                ownChangeUntil = ts;
+                return true;
+            }
+            sessionStorage.removeItem('wsOwnChange');
+        }
+        return false;
+    }
+
+    function connectWebSocket() {
+        try {
+            // Нативный WebSocket (без SockJS-обёртки) — убирает несовпадение версий
+            // SockJS-клиента и серверного iframe-транспорта (1.6.1 vs 1.0.0).
+            const socket = new WebSocket('ws://' + window.location.host + '/ws');
+            stompClient = Stomp.over(socket);
+            stompClient.debug = null; // отключаем шум в консоли
+            stompClient.connect({},
+                function () {
+                    console.log('[WS] подключено к /topic/creatures');
+                    stompClient.subscribe('/topic/creatures', function () {
+                        console.log('[WS] получено обновление');
+                        if (isOwnChange()) {
+                            console.log('[WS] своя команда, перезагрузка пропущена');
+                            return;
+                        }
+                        console.log('[WS] команда от другого клиента, перезагрузка страницы');
+                        window.location.reload();
+                    });
+                },
+                function (error) {
+                    console.error('[WS] ошибка соединения:', error);
+                    scheduleReconnect();
+                }
+            );
+            stompClient.onclose = function () {
+                console.warn('[WS] соединение закрыто');
+                scheduleReconnect();
+            };
+        } catch (e) {
+            console.error('[WS] не удалось создать соединение:', e);
+            scheduleReconnect();
+        }
+    }
+
+    function scheduleReconnect() {
+        if (reconnectTimeout) return;
+        reconnectTimeout = setTimeout(function () {
+            reconnectTimeout = null;
+            connectWebSocket();
+        }, 3000);
+    }
+
+    // Пометить свои действия, чтобы не прерывать свой редирект перезагрузкой.
+    document.querySelectorAll('form').forEach(function (form) {
+        form.addEventListener('submit', markOwnChange);
+    });
+    document.querySelectorAll('a.btn-danger').forEach(function (link) {
+        link.addEventListener('click', markOwnChange);
+    });
+
+    connectWebSocket();
+</th:block>
+
+</html>

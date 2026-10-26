@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             version="3.0"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
+
+    <persistence-unit name="lab1PU" transaction-type="RESOURCE_LOCAL">
+        <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+
+        <class>com.itmo.lab1.entity.BookCreature</class>
+        <class>com.itmo.lab1.entity.Coordinates</class>
+        <class>com.itmo.lab1.entity.MagicCity</class>
+        <class>com.itmo.lab1.entity.Ring</class>
+
+        <properties>
+            <!--
+              Данные для подключения берутся из DataSource-бина JpaConfig
+              (application.properties), поэтому здесь не храним url/user/password —
+              чтобы не дублировать секреты в третьем месте.
+            -->
+            <!-- Диалект и генерация схемы (схему создаём скриптом, а не автоматически) -->
+            <property name="eclipselink.target-database" value="org.eclipse.persistence.platform.database.PostgreSQLPlatform"/>
+            <property name="eclipselink.ddl-generation" value="none"/>
+            <property name="eclipselink.logging.level" value="FINE"/>
+            <property name="eclipselink.logging.logger" value="org.eclipse.persistence.logging.DefaultSessionLog"/>
+
+            <!-- Соединение через пул данных приложения -->
+            <property name="eclipselink.jdbc.connections.default.read.retry.count" value="3"/>
+        </properties>
+    </persistence-unit>
+
+</persistence>

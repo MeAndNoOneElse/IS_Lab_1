@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{_menu :: head}">
+    <title th:if="${creature.id != null}">Редактирование существа</title>
+    <title th:unless="${creature.id != null}">Создание существа</title>
+</head>
+<body>
+<nav th:insert="~{_menu :: nav}"></nav>
+<div class="container">
+    <div th:insert="~{_menu :: flash}"></div>
+    <h2 th:if="${creature.id != null}">Редактирование существа #<span th:text="${creature.id}"></span></h2>
+    <h2 th:unless="${creature.id != null}">Создание существа</h2>
+
+    <div th:if="${errorMessage}" class="flash error" th:text="${errorMessage}"></div>
+
+    <form th:action="${creature.id != null ? '/bookcreatures/' + creature.id + '/edit' : '/bookcreatures/new'}" method="post" th:object="${creature}">
+        <div class="form-group">
+            <label>Имя <span style="color:#e74c3c;">*</span></label>
+            <input type="text" th:field="*{name}" class="error" th:classappend="${#fields.hasErrors('name')} ? 'error' : ''"/>
+            <div class="error-msg" th:each="err : ${#fields.errors('name')}" th:text="${err}"></div>
+        </div>
+
+        <div class="form-group">
+            <label>Координаты X <span style="color:#e74c3c;">*</span></label>
+            <input type="number" th:field="*{coordinates.x}" class="error" th:classappend="${#fields.hasErrors('coordinates.x')} ? 'error' : ''"/>
+            <div class="error-msg" th:each="err : ${#fields.errors('coordinates.x')}" th:text="${err}"></div>
+        </div>
+        <div class="form-group">
+            <label>Координаты Y <span style="color:#e74c3c;">*</span></label>
+            <input type="number" th:field="*{coordinates.y}" class="error" th:classappend="${#fields.hasErrors('coordinates.y')} ? 'error' : ''"/>
+            <div class="error-msg" th:each="err : ${#fields.errors('coordinates.y')}" th:text="${err}"></div>
+        </div>
+
+        <div class="form-group">
+            <label>Возраст <span style="color:#e74c3c;">*</span></label>
+            <input type="number" th:field="*{age}" class="error" th:classappend="${#fields.hasErrors('age')} ? 'error' : ''"/>
+            <div class="error-msg" th:each="err : ${#fields.errors('age')}" th:text="${err}"></div>
+        </div>
+
+        <div class="form-group">
+            <label>Тип существа</label>
+            <select th:field="*{creatureType.code}">
+                <option value="">(не указан)</option>
+                <option th:each="type : ${creatureTypes}" th:value="${type.code}" th:text="${type.label}" th:selected="${creature.creatureType != null and creature.creatureType.code == type.code}"></option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Местоположение (город)</label>
+            <select th:field="*{creatureLocationId}">
+                <option value="">(не указан)</option>
+                <option th:each="city : ${cities}" th:value="${city.id}" th:text="${city.name}"></option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Уровень атаки <span style="color:#e74c3c;">*</span></label>
+            <input type="number" th:field="*{attackLevel}" class="error" th:classappend="${#fields.hasErrors('attackLevel')} ? 'error' : ''"/>
+            <div class="error-msg" th:each="err : ${#fields.errors('attackLevel')}" th:text="${err}"></div>
+        </div>
+
+        <div class="form-group">
+            <label>Уровень защиты</label>
+            <input type="number" step="0.01" th:field="*{defenseLevel}" class="error" th:classappend="${#fields.hasErrors('defenseLevel')} ? 'error' : ''"/>
+            <div class="error-msg" th:each="err : ${#fields.errors('defenseLevel')}" th:text="${err}"></div>
+        </div>
+
+        <div class="form-group">
+            <label>Кольцо</label>
+            <select th:field="*{ringId}">
+                <option value="">(не указано)</option>
+                <option th:each="ring : ${rings}" th:value="${ring.id}" th:text="${ring.name}"></option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-success">Сохранить</button>
+        <a class="btn" th:href="@{/bookcreatures}">Отмена</a>
+    </form>
+    <p><small>Поля со звёздочкой (*) обязательны. При некорректном вводе появится сообщение об ошибке.</small></p>
+</div>
+<script th:insert="~{_menu :: ws-client}"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{_menu :: head}">
+    <title>Город #${city.id}</title>
+</head>
+<body>
+<nav th:insert="~{_menu :: nav}"></nav>
+<div class="container">
+    <div th:insert="~{_menu :: flash}"></div>
+    <h2>Город #<span th:text="${city.id}"></span></h2>
+    <table>
+        <tr><th>Имя</th><td th:text="${city.name}"></td></tr>
+        <tr><th>Площадь</th><td th:text="${city.area}"></td></tr>
+        <tr><th>Население</th><td th:text="${city.population}"></td></tr>
+        <tr><th>Дата основания</th><td th:text="${city.establishmentDate}"></td></tr>
+        <tr><th>Правитель</th><td th:text="${city.governor.code}"></td></tr>
+        <tr><th>Столица</th><td th:text="${city.capital}"></td></tr>
+        <tr><th>Плотность населения</th><td th:text="${city.populationDensity}"></td></tr>
+    </table>
+    <p>
+        <a class="btn" th:href="@{/magiccities/{id}/edit(id=${city.id})}">Изменить</a>
+        <a class="btn btn-danger" th:href="@{/magiccities/{id}/delete(id=${city.id})}" onclick="return confirm('Удалить город?')">Удалить</a>
+        <a class="btn" th:href="@{/magiccities}">К списку</a>
+    </p>
+</div>
+<script th:insert="~{_menu :: ws-client}"></script>
+</body>
+</html>

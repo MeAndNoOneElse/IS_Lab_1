@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{_menu :: head}">
+    <title>Спецоперации БД</title>
+</head>
+<body>
+<nav th:insert="~{_menu :: nav}"></nav>
+<div class="container">
+    <div th:insert="~{_menu :: flash}"></div>
+    <h2>Специальные операции (функции БД)</h2>
+
+    <h3>1. Сумма уровней атаки всех существ</h3>
+    <form th:action="@{/special/sum}" method="post">
+        <button type="submit" class="btn btn-success">Вычислить</button>
+    </form>
+
+    <h3>2. Существа, имя которых начинается с подстроки</h3>
+    <form th:action="@{/special/name}" method="post">
+        <input type="text" name="substring" placeholder="подстрока" required/>
+        <button type="submit" class="btn">Найти</button>
+    </form>
+
+    <h3>3. Уникальные значения уровня атаки</h3>
+    <form th:action="@{/special/unique-levels}" method="post">
+        <button type="submit" class="btn">Показать уникальные</button>
+    </form>
+
+    <h3>4. Обмен кольцами между персонажами</h3>
+    <form th:action="@{/special/swap-rings}" method="post">
+        <input type="number" name="id1" placeholder="id персонажа 1" required/>
+        <input type="number" name="id2" placeholder="id персонажа 2" required/>
+        <button type="submit" class="btn">Обменять кольца</button>
+    </form>
+
+    <h3>5. Уничтожить города эльфов</h3>
+    <form th:action="@{/special/destroy-elf-cities}" method="post">
+        <button type="submit" class="btn btn-danger">Уничтожить города эльфов</button>
+    </form>
+
+    <div th:if="${result != null}" style="margin-top:1.5rem;background:#fff;padding:1rem;border-radius:6px;">
+        <h4>Результат операции: <span th:text="${result.operation}"></span></h4>
+        <div th:if="${result.success}" class="flash success" th:text="${result.message}"></div>
+        <div th:unless="${result.success}" class="flash error" th:text="${result.message}"></div>
+        <div th:if="${result.result != null}">
+            <h5>Данные:</h5>
+            <ul>
+                <li th:if="${#lists.isEmpty(result.result)}" style="color:#777">(пусто)</li>
+                <li th:each="item : ${result.result}" th:text="${item}"></li>
+            </ul>
+        </div>
+        <div th:if="${substring != null}">Поиск по подстроке: <span th:text="${substring}"></span></div>
+    </div>
+
+    <p><a class="btn" th:href="@{/}">Вернуться в меню</a></p>
+</div>
+<script th:insert="~{_menu :: ws-client}"></script>
+</body>
+</html>

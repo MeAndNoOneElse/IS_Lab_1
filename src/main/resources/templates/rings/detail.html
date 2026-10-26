@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{_menu :: head}">
+    <title>Кольцо #${ring.id}</title>
+</head>
+<body>
+<nav th:insert="~{_menu :: nav}"></nav>
+<div class="container">
+    <div th:insert="~{_menu :: flash}"></div>
+    <h2>Кольцо #<span th:text="${ring.id}"></span></h2>
+    <table>
+        <tr><th>Имя</th><td th:text="${ring.name}"></td></tr>
+        <tr><th>Сила</th><td th:text="${ring.power}"></td></tr>
+    </table>
+    <p>
+        <a class="btn" th:href="@{/rings/{id}/edit(id=${ring.id})}">Изменить</a>
+        <a class="btn btn-danger" th:href="@{/rings/{id}/delete(id=${ring.id})}" onclick="return confirm('Удалить кольцо?')">Удалить</a>
+        <a class="btn" th:href="@{/rings}">К списку</a>
+    </p>
+    <p><a class="btn" th:href="@{/}">Вернуться в меню</a></p>
+</div>
+<script th:insert="~{_menu :: ws-client}"></script>
+</body>
+</html>

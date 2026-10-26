@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{_menu :: head}">
+    <title>Города магии</title>
+</head>
+<body>
+<nav th:insert="~{_menu :: nav}"></nav>
+<div class="container">
+    <div th:insert="~{_menu :: flash}"></div>
+    <h2>Волшебные города</h2>
+    <div id="ajax-message" style="margin-bottom:1rem;"></div>
+
+    <form th:action="@{/magiccities}" method="get" style="display:flex;gap:0.5rem;align-items:flex-end;margin-bottom:1rem;flex-wrap:wrap;">
+        <input type="hidden" name="page" th:value="${currentPage}"/>
+        <input type="hidden" name="sort" th:value="${sort}"/>
+        <input type="hidden" name="dir" th:value="${dir}"/>
+        <label>Фильтр</label>
+        <input name="filterValue" type="text" th:value="${filterValue}" placeholder="фильтр по имени"/>
+        <label>Показывать</label>
+        <select name="size" onchange="this.form.submit()">
+            <option value="10" th:selected="${size == 10}">10</option>
+            <option value="25" th:selected="${size == 25}">25</option>
+            <option value="50" th:selected="${size == 50}">50</option>
+            <option value="100" th:selected="${size == 100}">100</option>
+        </select>
+        <button type="submit" class="btn">Применить</button>
+        <a th:href="@{/magiccities}" class="btn">Сброс</a>
+    </form>
+
+    <table id="cities-table">
+        <thead>
+        <tr>
+            <th th:with="nextDir=${dir == 'asc' ? 'desc' : 'asc'}"><a th:href="@{/magiccities(page=${currentPage},size=${size},sort='id',dir=${nextDir},filterColumn=${filterColumn},filterValue=${filterValue})}">ID</a></th>
+            <th th:with="nextDir=${dir == 'asc' ? 'desc' : 'asc'}"><a th:href="@{/magiccities(page=${currentPage},size=${size},sort='name',dir=${nextDir},filterColumn=${filterColumn},filterValue=${filterValue})}">Имя</a></th>
+            <th th:with="nextDir=${dir == 'asc' ? 'desc' : 'asc'}"><a th:href="@{/magiccities(page=${currentPage},size=${size},sort='area',dir=${nextDir},filterColumn=${filterColumn},filterValue=${filterValue})}">Площадь</a></th>
+            <th th:with="nextDir=${dir == 'asc' ? 'desc' : 'asc'}"><a th:href="@{/magiccities(page=${currentPage},size=${size},sort='population',dir=${nextDir},filterColumn=${filterColumn},filterValue=${filterValue})}">Население</a></th>
+            <th>Дата основания</th>
+            <th th:with="nextDir=${dir == 'asc' ? 'desc' : 'asc'}"><a th:href="@{/magiccities(page=${currentPage},size=${size},sort='governor',dir=${nextDir},filterColumn=${filterColumn},filterValue=${filterValue})}">Правитель</a></th>
+            <th>Столица</th>
+            <th th:with="nextDir=${dir == 'asc' ? 'desc' : 'asc'}"><a th:href="@{/magiccities(page=${currentPage},size=${size},sort='populationDensity',dir=${nextDir},filterColumn=${filterColumn},filterValue=${filterValue})}">Плотность</a></th>
+            <th class="actions">Действия</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="c : ${items}" th:id="'row-' + ${c.id}">
+            <td th:text="${c.id}"></td>
+            <td><a th:href="@{/magiccities/{id}(id=${c.id})}" th:text="${c.name}"></a></td>
+            <td th:text="${c.area}"></td>
+            <td th:text="${c.population}"></td>
+            <td th:text="${c.establishmentDate}"></td>
+            <td th:text="${c.governor != null ? c.governor.code : '-'}"></td>
+            <td th:text="${c.capital}"></td>
+            <td th:text="${c.populationDensity}"></td>
+            <td class="actions">
+                <a class="btn" th:href="@{/magiccities/{id}/edit(id=${c.id})}">Изменить</a>
+                <a class="btn btn-danger" th:href="@{/magiccities/{id}/delete(id=${c.id})}"
+                   onclick="return confirmDelete(this, 'Город', ${c.id})">Удалить</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        <a th:if="${hasPrev}" th:href="@{/magiccities(page=${currentPage-1},size=${size},sort=${sort},dir=${dir},filterColumn=${filterColumn},filterValue=${filterValue})}" class="btn">← Назад</a>
+        <span th:if="${!hasPrev}" class="btn disabled">← Назад</span>
+        <span>Страница <b th:text="${currentPage}"></b> из <b th:text="${totalPages}"></b></span>
+        <a th:if="${hasNext}" th:href="@{/magiccities(page=${currentPage+1},size=${size},sort=${sort},dir=${dir},filterColumn=${filterColumn},filterValue=${filterValue})}" class="btn">Вперед →</a>
+        <span th:if="${!hasNext}" class="btn disabled">Вперед →</span>
+    </div>
+    <p><a class="btn btn-success" th:href="@{/magiccities/new}">+ Создать город</a></p>
+    <p><a class="btn" th:href="@{/}">Вернуться в меню</a></p>
+</div>
+<script th:insert="~{_menu :: ws-client}"></script>
+<script>
+    function confirmDelete(link, typeName, id) {
+        if (!confirm('Удалить ' + typeName + '?')) {
+            return false;
+        }
+        var deleteUrl = window.location.origin + '/magiccities/' + id + '/delete-ajax';
+        fetch(deleteUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            credentials: 'same-origin'
+        }).then(function (resp) {
+            return resp.json();
+        }).then(function (data) {
+            var msg = document.getElementById('ajax-message');
+            var div = document.createElement('div');
+            div.style.padding = '0.75rem';
+            div.style.borderRadius = '4px';
+            div.style.marginBottom = '1rem';
+            if (data.success) {
+                div.style.background = '#d4edda';
+                div.style.color = '#155724';
+                div.textContent = data.message;
+                var row = document.getElementById('row-' + id);
+                if (row) {
+                    row.remove();
+                }
+            } else {
+                div.style.background = '#f8d7da';
+                div.style.color = '#721c24';
+                div.textContent = data.message;
+            }
+            msg.appendChild(div);
+            setTimeout(function () { div.remove(); }, 5000);
+        }).catch(function (err) {
+            var msg = document.getElementById('ajax-message');
+            var div = document.createElement('div');
+            div.style.background = '#f8d7da';
+            div.style.color = '#721c24';
+            div.style.padding = '0.75rem';
+            div.textContent = 'Ошибка при удалении: ' + err;
+            msg.appendChild(div);
+        });
+        return false;
+    }
+</script>
+</body>
+</html>
