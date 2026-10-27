@@ -203,6 +203,26 @@ public class BookCreatureRepository extends BaseRepository<BookCreature, Long> {
         return em.createQuery(cq).getSingleResult() > 0;
     }
 
+    public boolean existsReferencedByRing(Long ringId) {
+        // Легковесный запрос: существа, у которых задано это кольцо.
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<Long> cq = cb.createQuery(Long.class);
+        Root<BookCreature> root = cq.from(BookCreature.class);
+        cq.select(cb.count(root));
+        cq.where(cb.equal(root.get("ring").get("id"), ringId));
+        return em.createQuery(cq).getSingleResult() > 0;
+    }
+
+    public boolean existsReferencedByCity(Long cityId) {
+        // Легковесный запрос: существа, у которых задан этот город.
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<Long> cq = cb.createQuery(Long.class);
+        Root<BookCreature> root = cq.from(BookCreature.class);
+        cq.select(cb.count(root));
+        cq.where(cb.equal(root.get("creatureLocation").get("id"), cityId));
+        return em.createQuery(cq).getSingleResult() > 0;
+    }
+
     /**
      * Разрешить путь сортировки: поддерживаются простые поля (id, name, age…) и
      * вложенные через точку (coordinates.x, creatureLocation.name, ring.name).

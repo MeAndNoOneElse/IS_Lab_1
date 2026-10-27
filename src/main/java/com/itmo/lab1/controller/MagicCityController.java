@@ -4,10 +4,10 @@ import com.itmo.lab1.dto.BookCreatureTypeDto;
 import com.itmo.lab1.dto.MagicCityDto;
 import com.itmo.lab1.service.MagicCityService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -58,8 +58,8 @@ public class MagicCityController {
      * В модель передаются элементы страницы, параметры пагинации и текущие значения фильтров.
      */
     @GetMapping
-    public String list(@RequestParam(defaultValue = "1") int page,
-                       @RequestParam(defaultValue = "10") int size,
+    public String list(@RequestParam(defaultValue = "1") @Min(1) int page,
+                       @RequestParam(defaultValue = "10") @Min(1) int size,
                        @RequestParam(required = false) String sort,
                        @RequestParam(required = false) String dir,
                        @RequestParam(required = false) String filterColumn,
@@ -111,14 +111,8 @@ public class MagicCityController {
             model.addAttribute("city", dto);
             return "magiccities/form";
         }
-        try {
-            service.create(dto);
-            redirectAttributes.addFlashAttribute("success", "Город создан");
-        } catch (Exception ex) {
-            model.addAttribute("errorMessage", ex.getMessage());
-            model.addAttribute("city", dto);
-            return "magiccities/form";
-        }
+        service.create(dto);
+        redirectAttributes.addFlashAttribute("success", "Город создан");
         return "redirect:/magiccities";
     }
 
@@ -144,14 +138,8 @@ public class MagicCityController {
             model.addAttribute("city", dto);
             return "magiccities/form";
         }
-        try {
-            service.update(id, dto);
-            redirectAttributes.addFlashAttribute("success", "Город обновлён");
-        } catch (Exception ex) {
-            model.addAttribute("errorMessage", ex.getMessage());
-            model.addAttribute("city", dto);
-            return "magiccities/form";
-        }
+        service.update(id, dto);
+        redirectAttributes.addFlashAttribute("success", "Город обновлён");
         return "redirect:/magiccities/" + id;
     }
 
@@ -168,21 +156,17 @@ public class MagicCityController {
      * Удаляет город по ID и перенаправляет на список с сохранением параметров страницы и фильтров.
      * Результат передаётся через flash-атрибуты.
      */
-    @GetMapping("/{id}/delete")
+    @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id,
-                         @RequestParam(defaultValue = "1") int page,
-                         @RequestParam(defaultValue = "10") int size,
+                         @RequestParam(defaultValue = "1") @Min(1) int page,
+                         @RequestParam(defaultValue = "10") @Min(1) int size,
                          @RequestParam(required = false) String sort,
                          @RequestParam(required = false) String dir,
                          @RequestParam(required = false) String filterColumn,
                          @RequestParam(required = false) String filterValue,
                          RedirectAttributes redirectAttributes) {
-        try {
-            service.delete(id);
-            redirectAttributes.addFlashAttribute("success", "Город удалён");
-        } catch (Exception ex) {
-            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
-        }
+        service.delete(id);
+        redirectAttributes.addFlashAttribute("success", "Город удалён");
         return "redirect:/magiccities?page=" + page + "&size=" + size
                 + (sort != null ? "&sort=" + sort : "")
                 + (dir != null ? "&dir=" + dir : "")
@@ -197,15 +181,10 @@ public class MagicCityController {
     @PostMapping("/{id}/delete-ajax")
     @ResponseBody
     public Map<String, Object> deleteAjax(@PathVariable Long id) {
+        service.delete(id);
         Map<String, Object> result = new HashMap<>();
-        try {
-            service.delete(id);
-            result.put("success", true);
-            result.put("message", "Город удалён");
-        } catch (Exception ex) {
-            result.put("success", false);
-            result.put("message", ex.getMessage());
-        }
+        result.put("success", true);
+        result.put("message", "Город удалён");
         return result;
     }
 }

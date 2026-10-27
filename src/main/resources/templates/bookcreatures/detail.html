@@ -22,7 +22,7 @@
     </table>
     <p>
         <a class="btn" th:href="@{/bookcreatures/{id}/edit(id=${creature.id})}">Изменить</a>
-        <a class="btn btn-danger" th:href="@{/bookcreatures/{id}/delete(id=${creature.id})}" onclick="return confirm('Удалить существо?')">Удалить</a>
+        <a class="btn btn-danger" href="#" th:data-delete-url="@{/bookcreatures/{id}/delete-ajax(id=${creature.id})}" th:data-id="${creature.id}" onclick="return confirmDelete(this, 'Существо')">Удалить</a>
         <a class="btn" th:href="@{/bookcreatures}">К списку</a>
     </p>
     <p><a class="btn" th:href="@{/}">Вернуться в меню</a></p>

@@ -43,8 +43,7 @@
             <td th:text="${r.power}"></td>
             <td class="actions">
                 <a class="btn" th:href="@{/rings/{id}/edit(id=${r.id})}">Изменить</a>
-                <a class="btn btn-danger" th:href="@{/rings/{id}/delete(id=${r.id})}"
-                   onclick="return confirmDelete(this, 'Кольцо', ${r.id})">Удалить</a>
+                <a class="btn btn-danger" href="#" th:data-delete-url="@{/rings/{id}/delete-ajax(id=${r.id})}" th:data-id="${r.id}" onclick="return confirmDelete(this, 'Кольцо')">Удалить</a>
             </td>
         </tr>
         </tbody>
@@ -62,11 +61,12 @@
 </div>
 <script th:insert="~{_menu :: ws-client}"></script>
 <script>
-    function confirmDelete(link, typeName, id) {
+    function confirmDelete(link, typeName) {
         if (!confirm('Удалить ' + typeName + '?')) {
             return false;
         }
-        var deleteUrl = window.location.origin + '/rings/' + id + '/delete-ajax';
+        var deleteUrl = link.getAttribute('data-delete-url');
+        var id = link.getAttribute('data-id');
         fetch(deleteUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

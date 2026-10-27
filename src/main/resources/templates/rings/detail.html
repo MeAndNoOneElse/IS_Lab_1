@@ -14,7 +14,7 @@
     </table>
     <p>
         <a class="btn" th:href="@{/rings/{id}/edit(id=${ring.id})}">Изменить</a>
-        <a class="btn btn-danger" th:href="@{/rings/{id}/delete(id=${ring.id})}" onclick="return confirm('Удалить кольцо?')">Удалить</a>
+        <a class="btn btn-danger" href="#" th:data-delete-url="@{/rings/{id}/delete-ajax(id=${ring.id})}" th:data-id="${ring.id}" onclick="return confirmDelete(this, 'Кольцо')">Удалить</a>
         <a class="btn" th:href="@{/rings}">К списку</a>
     </p>
     <p><a class="btn" th:href="@{/}">Вернуться в меню</a></p>

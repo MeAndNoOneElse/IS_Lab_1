@@ -6,13 +6,14 @@ import com.itmo.lab1.dto.BookCreatureTypeDto;
 import com.itmo.lab1.dto.CoordinatesDto;
 import com.itmo.lab1.dto.MagicCityDto;
 import com.itmo.lab1.dto.RingDto;
-import com.itmo.lab1.exception.EntityNotFoundException;
 import com.itmo.lab1.service.BookCreatureService;
 import com.itmo.lab1.service.MagicCityService;
 import com.itmo.lab1.service.RingService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import java.util.HashMap;
 import java.util.List;
-import org.springframework.http.ResponseEntity;
+import java.util.Map;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -24,9 +25,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Контроллер существ (BookCreature). Обрабатывает все веб-запросы по пути {@code /bookcreatures}.
@@ -82,8 +80,8 @@ public class BookCreatureController {
      * и списки городов/колец для фильтров на форме.
      */
     @GetMapping
-    public String list(@RequestParam(defaultValue = "1") int page,
-                       @RequestParam(defaultValue = "10") int size,
+    public String list(@RequestParam(defaultValue = "1") @Min(1) int page,
+                       @RequestParam(defaultValue = "10") @Min(1) int size,
                        @RequestParam(required = false) String sort,
                        @RequestParam(required = false) String dir,
                        @RequestParam(required = false) String filterColumn,
@@ -155,7 +153,7 @@ public class BookCreatureController {
      *       не является частью основной формы напрямую;</li>
      *   <li>{@code RedirectAttributes} — передаёт flash-сообщение об успехе/ошибке при редиректе.</li>
      * </ul>
-     * При ошибках валидации или исключении в сервисе форма отображается повторно с сообщением об ошибке.
+     * При ошибках валидации форма отображается повторно с сообщением об ошибке.
      * После успешного создания — редирект на список с сохранением текущих параметров страницы и фильтров.
      */
     @PostMapping("/new")
@@ -164,17 +162,17 @@ public class BookCreatureController {
                          @ModelAttribute("coordinates") CoordinatesDto coordinates,
                          RedirectAttributes redirectAttributes,
                          Model model,
-                         @RequestParam(defaultValue = "1") int page,
-                         @RequestParam(defaultValue = "10") int size,
+                         @RequestParam(defaultValue = "1") @Min(1) int page,
+                         @RequestParam(defaultValue = "10") @Min(1) int size,
                          @RequestParam(required = false) String sort,
                          @RequestParam(required = false) String dir,
                          @RequestParam(required = false) String filterColumn,
                          @RequestParam(required = false) String filterValue,
                          @RequestParam(required = false) String maxDistance,
-                       @RequestParam(required = false) String creationFrom,
-                       @RequestParam(required = false) String creationTo,
-                       @RequestParam(required = false) String creatureLocationId,
-                       @RequestParam(required = false) String ringId) {
+                         @RequestParam(required = false) String creationFrom,
+                         @RequestParam(required = false) String creationTo,
+                         @RequestParam(required = false) String creatureLocationId,
+                         @RequestParam(required = false) String ringId) {
         // Координаты — обязательный вложенный объект; если не пришли из формы, подставляем отдельный DTO
         if (dto.getCoordinates() == null) {
             dto.setCoordinates(coordinates);
@@ -183,14 +181,8 @@ public class BookCreatureController {
             model.addAttribute("creature", dto);
             return "bookcreatures/form";
         }
-        try {
-            creatureService.create(dto);
-            redirectAttributes.addFlashAttribute("success", "Существо успешно создано");
-        } catch (Exception ex) {
-            model.addAttribute("errorMessage", ex.getMessage());
-            model.addAttribute("creature", dto);
-            return "bookcreatures/form";
-        }
+        creatureService.create(dto);
+        redirectAttributes.addFlashAttribute("success", "Существо успешно создано");
         return "redirect:/bookcreatures?page=" + page + "&size=" + size
                 + (sort != null ? "&sort=" + sort : "")
                 + (dir != null ? "&dir=" + dir : "")
@@ -206,6 +198,7 @@ public class BookCreatureController {
     /**
      * Отображает форму редактирования существа с предзаполненными данными.
      * Города и кольца передаются для выпадающих списков на форме.
+     * Связи (город, кольцо) сохраняются из существующего существа — не обнуляются.
      */
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
@@ -218,8 +211,8 @@ public class BookCreatureController {
         form.setDefenseLevel(dto.getDefenseLevel());
         form.setCreatureType(dto.getCreatureType() != null
                 ? new BookCreatureTypeDto(dto.getCreatureType(), dto.getCreatureType()) : null);
-        form.setCreatureLocationId(null); // заполняется в форме при необходимости
-        form.setRingId(null);
+        form.setCreatureLocationId(dto.getCreatureLocationId());
+        form.setRingId(dto.getRingId());
         if (dto.getCoordinates() != null) {
             form.setCoordinates(dto.getCoordinates());
         }
@@ -240,8 +233,8 @@ public class BookCreatureController {
                          BindingResult bindingResult,
                          RedirectAttributes redirectAttributes,
                          Model model,
-                         @RequestParam(defaultValue = "1") int page,
-                         @RequestParam(defaultValue = "10") int size,
+                         @RequestParam(defaultValue = "1") @Min(1) int page,
+                         @RequestParam(defaultValue = "10") @Min(1) int size,
                          @RequestParam(required = false) String sort,
                          @RequestParam(required = false) String dir,
                          @RequestParam(required = false) String filterColumn,
@@ -255,14 +248,8 @@ public class BookCreatureController {
             model.addAttribute("creature", dto);
             return "bookcreatures/form";
         }
-        try {
-            creatureService.update(id, dto);
-            redirectAttributes.addFlashAttribute("success", "Существо успешно обновлено");
-        } catch (Exception ex) {
-            model.addAttribute("errorMessage", ex.getMessage());
-            model.addAttribute("creature", dto);
-            return "bookcreatures/form";
-        }
+        creatureService.update(id, dto);
+        redirectAttributes.addFlashAttribute("success", "Существо успешно обновлено");
         return "redirect:/bookcreatures?page=" + page + "&size=" + size
                 + (sort != null ? "&sort=" + sort : "")
                 + (dir != null ? "&dir=" + dir : "")
@@ -279,10 +266,10 @@ public class BookCreatureController {
      * Удаляет существо по ID и перенаправляет на список с сохранением параметров страницы и фильтров.
      * Результат (успех или ошибка) передаётся через flash-атрибуты.
      */
-    @GetMapping("/{id}/delete")
+    @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id,
-                         @RequestParam(defaultValue = "1") int page,
-                         @RequestParam(defaultValue = "10") int size,
+                         @RequestParam(defaultValue = "1") @Min(1) int page,
+                         @RequestParam(defaultValue = "10") @Min(1) int size,
                          @RequestParam(required = false) String sort,
                          @RequestParam(required = false) String dir,
                          @RequestParam(required = false) String filterColumn,
@@ -293,12 +280,8 @@ public class BookCreatureController {
                          @RequestParam(required = false) String creatureLocationId,
                          @RequestParam(required = false) String ringId,
                          RedirectAttributes redirectAttributes) {
-        try {
-            creatureService.delete(id);
-            redirectAttributes.addFlashAttribute("success", "Существо успешно удалено");
-        } catch (Exception ex) {
-            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
-        }
+        creatureService.delete(id);
+        redirectAttributes.addFlashAttribute("success", "Существо успешно удалено");
         return "redirect:/bookcreatures?page=" + page + "&size=" + size
                 + (sort != null ? "&sort=" + sort : "")
                 + (dir != null ? "&dir=" + dir : "")
@@ -318,15 +301,10 @@ public class BookCreatureController {
     @PostMapping("/{id}/delete-ajax")
     @ResponseBody
     public Map<String, Object> deleteAjax(@PathVariable Long id) {
+        creatureService.delete(id);
         Map<String, Object> result = new HashMap<>();
-        try {
-            creatureService.delete(id);
-            result.put("success", true);
-            result.put("message", "Существо успешно удалено");
-        } catch (Exception ex) {
-            result.put("success", false);
-            result.put("message", ex.getMessage());
-        }
+        result.put("success", true);
+        result.put("message", "Существо успешно удалено");
         return result;
     }
 }

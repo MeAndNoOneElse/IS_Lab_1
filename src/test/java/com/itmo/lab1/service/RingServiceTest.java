@@ -3,6 +3,8 @@ package com.itmo.lab1.service;
 import com.itmo.lab1.dto.RingDto;
 import com.itmo.lab1.entity.Ring;
 import com.itmo.lab1.exception.EntityNotFoundException;
+import com.itmo.lab1.exception.ReferencedEntityException;
+import com.itmo.lab1.repository.BookCreatureRepository;
 import com.itmo.lab1.repository.RingRepository;
 import com.itmo.lab1.websocket.ChangeBroadcaster;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,13 +28,15 @@ class RingServiceTest {
     @Mock
     private RingRepository repository;
     @Mock
+    private BookCreatureRepository creatureRepository;
+    @Mock
     private ChangeBroadcaster broadcaster;
 
     private RingService service;
 
     @BeforeEach
     void setUp() {
-        service = new RingService(repository, broadcaster);
+        service = new RingService(repository, creatureRepository, broadcaster);
     }
 
     private RingDto newDto() {
@@ -88,5 +92,35 @@ class RingServiceTest {
         assertEquals("The One Ring", ring.getName());
         assertEquals(100L, ring.getPower());
         verify(repository).save(ring);
+    }
+
+    @Test
+    void deleteShouldThrowWhenMissing() {
+        when(repository.existsById(5L)).thenReturn(false);
+        assertThrows(EntityNotFoundException.class, () -> service.delete(5L));
+        verify(repository, never()).deleteById(5L);
+        verify(broadcaster, never()).broadcastCreatureChanged();
+    }
+
+    @Test
+    void deleteShouldThrowWhenReferencedByCreature() {
+        when(repository.existsById(7L)).thenReturn(true);
+        when(creatureRepository.existsReferencedByRing(7L)).thenReturn(true);
+
+        assertThrows(ReferencedEntityException.class, () -> service.delete(7L));
+        verify(repository, never()).deleteById(7L);
+        verify(broadcaster, never()).broadcastCreatureChanged();
+    }
+
+    @Test
+    void deleteShouldSucceedWhenNotReferenced() {
+        when(repository.existsById(9L)).thenReturn(true);
+        when(creatureRepository.existsReferencedByRing(9L)).thenReturn(false);
+
+        service.delete(9L);
+
+        verify(creatureRepository).existsReferencedByRing(9L);
+        verify(repository).deleteById(9L);
+        verify(broadcaster).broadcastCreatureChanged();
     }
 }

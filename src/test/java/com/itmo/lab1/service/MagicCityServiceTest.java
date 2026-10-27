@@ -5,6 +5,8 @@ import com.itmo.lab1.dto.MagicCityDto;
 import com.itmo.lab1.entity.BookCreatureType;
 import com.itmo.lab1.entity.MagicCity;
 import com.itmo.lab1.exception.EntityNotFoundException;
+import com.itmo.lab1.exception.ReferencedEntityException;
+import com.itmo.lab1.repository.BookCreatureRepository;
 import com.itmo.lab1.repository.MagicCityRepository;
 import com.itmo.lab1.websocket.ChangeBroadcaster;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,13 +31,15 @@ class MagicCityServiceTest {
     @Mock
     private MagicCityRepository repository;
     @Mock
+    private BookCreatureRepository creatureRepository;
+    @Mock
     private ChangeBroadcaster broadcaster;
 
     private MagicCityService service;
 
     @BeforeEach
     void setUp() {
-        service = new MagicCityService(repository, broadcaster);
+        service = new MagicCityService(repository, creatureRepository, broadcaster);
     }
 
     private MagicCityDto newDto() {
@@ -87,10 +91,12 @@ class MagicCityServiceTest {
     @Test
     void deleteShouldCallExistsByIdAndDeleteById() {
         when(repository.existsById(1L)).thenReturn(true);
+        when(creatureRepository.existsReferencedByCity(1L)).thenReturn(false);
 
         service.delete(1L);
 
         verify(repository).existsById(1L);
+        verify(creatureRepository).existsReferencedByCity(1L);
         verify(repository).deleteById(1L);
         verify(broadcaster).broadcastCreatureChanged();
     }
@@ -100,6 +106,16 @@ class MagicCityServiceTest {
         when(repository.existsById(5L)).thenReturn(false);
         assertThrows(EntityNotFoundException.class, () -> service.delete(5L));
         verify(repository, never()).deleteById(5L);
+        verify(broadcaster, never()).broadcastCreatureChanged();
+    }
+
+    @Test
+    void deleteShouldThrowWhenReferencedByCreature() {
+        when(repository.existsById(7L)).thenReturn(true);
+        when(creatureRepository.existsReferencedByCity(7L)).thenReturn(true);
+
+        assertThrows(ReferencedEntityException.class, () -> service.delete(7L));
+        verify(repository, never()).deleteById(7L);
         verify(broadcaster, never()).broadcastCreatureChanged();
     }
 

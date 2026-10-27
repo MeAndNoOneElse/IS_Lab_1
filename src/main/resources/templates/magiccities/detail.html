@@ -19,7 +19,7 @@
     </table>
     <p>
         <a class="btn" th:href="@{/magiccities/{id}/edit(id=${city.id})}">Изменить</a>
-        <a class="btn btn-danger" th:href="@{/magiccities/{id}/delete(id=${city.id})}" onclick="return confirm('Удалить город?')">Удалить</a>
+        <a class="btn btn-danger" href="#" th:data-delete-url="@{/magiccities/{id}/delete-ajax(id=${city.id})}" th:data-id="${city.id}" onclick="return confirmDelete(this, 'Город')">Удалить</a>
         <a class="btn" th:href="@{/magiccities}">К списку</a>
     </p>
 </div>

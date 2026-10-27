@@ -45,19 +45,8 @@ public abstract class BaseRepository<T, ID> {
     }
 
     public void delete(T entity) {
-        if (!em.contains(entity)) {
-            entity = em.find(entityClass, getId(entity));
-        }
-        em.remove(entity);
-    }
-
-    @SuppressWarnings("unchecked")
-    protected ID getId(T entity) {
-        try {
-            return (ID) entityClass.getDeclaredMethod("getId").invoke(entity);
-        } catch (Exception e) {
-            throw new IllegalStateException("Cannot get id of " + entityClass.getName(), e);
-        }
+        T managed = em.contains(entity) ? entity : em.merge(entity);
+        em.remove(managed);
     }
 
     protected List<Predicate> buildPredicates(CriteriaBuilder cb, Root<T> root,

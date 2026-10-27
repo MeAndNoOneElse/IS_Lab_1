@@ -3,6 +3,7 @@ package com.itmo.lab1.controller;
 import com.itmo.lab1.dto.RingDto;
 import com.itmo.lab1.service.RingService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,8 +41,8 @@ public class RingController {
      * В модель передаются элементы страницы, параметры пагинации и текущие значения фильтров.
      */
     @GetMapping
-    public String list(@RequestParam(defaultValue = "1") int page,
-                       @RequestParam(defaultValue = "10") int size,
+    public String list(@RequestParam(defaultValue = "1") @Min(1) int page,
+                       @RequestParam(defaultValue = "10") @Min(1) int size,
                        @RequestParam(required = false) String sort,
                        @RequestParam(required = false) String dir,
                        @RequestParam(required = false) String filterColumn,
@@ -89,14 +90,8 @@ public class RingController {
             model.addAttribute("ring", dto);
             return "rings/form";
         }
-        try {
-            service.create(dto);
-            redirectAttributes.addFlashAttribute("success", "Кольцо создано");
-        } catch (Exception ex) {
-            model.addAttribute("errorMessage", ex.getMessage());
-            model.addAttribute("ring", dto);
-            return "rings/form";
-        }
+        service.create(dto);
+        redirectAttributes.addFlashAttribute("success", "Кольцо создано");
         return "redirect:/rings";
     }
 
@@ -122,14 +117,8 @@ public class RingController {
             model.addAttribute("ring", dto);
             return "rings/form";
         }
-        try {
-            service.update(id, dto);
-            redirectAttributes.addFlashAttribute("success", "Кольцо обновлено");
-        } catch (Exception ex) {
-            model.addAttribute("errorMessage", ex.getMessage());
-            model.addAttribute("ring", dto);
-            return "rings/form";
-        }
+        service.update(id, dto);
+        redirectAttributes.addFlashAttribute("success", "Кольцо обновлено");
         return "redirect:/rings/" + id;
     }
 
@@ -146,21 +135,17 @@ public class RingController {
      * Удаляет кольцо по ID и перенаправляет на список с сохранением параметров страницы и фильтров.
      * Результат передаётся через flash-атрибуты.
      */
-    @GetMapping("/{id}/delete")
+    @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id,
-                         @RequestParam(defaultValue = "1") int page,
-                         @RequestParam(defaultValue = "10") int size,
+                         @RequestParam(defaultValue = "1") @Min(1) int page,
+                         @RequestParam(defaultValue = "10") @Min(1) int size,
                          @RequestParam(required = false) String sort,
                          @RequestParam(required = false) String dir,
                          @RequestParam(required = false) String filterColumn,
                          @RequestParam(required = false) String filterValue,
                          RedirectAttributes redirectAttributes) {
-        try {
-            service.delete(id);
-            redirectAttributes.addFlashAttribute("success", "Кольцо удалено");
-        } catch (Exception ex) {
-            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
-        }
+        service.delete(id);
+        redirectAttributes.addFlashAttribute("success", "Кольцо удалено");
         return "redirect:/rings?page=" + page + "&size=" + size
                 + (sort != null ? "&sort=" + sort : "")
                 + (dir != null ? "&dir=" + dir : "")
@@ -175,15 +160,10 @@ public class RingController {
     @PostMapping("/{id}/delete-ajax")
     @ResponseBody
     public Map<String, Object> deleteAjax(@PathVariable Long id) {
+        service.delete(id);
         Map<String, Object> result = new HashMap<>();
-        try {
-            service.delete(id);
-            result.put("success", true);
-            result.put("message", "Кольцо удалено");
-        } catch (Exception ex) {
-            result.put("success", false);
-            result.put("message", ex.getMessage());
-        }
+        result.put("success", true);
+        result.put("message", "Кольцо удалено");
         return result;
     }
 }

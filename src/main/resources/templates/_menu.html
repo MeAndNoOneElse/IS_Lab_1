@@ -147,6 +147,54 @@
         link.addEventListener('click', markOwnChange);
     });
 
+    function confirmDelete(link, typeName) {
+        if (!confirm('Удалить ' + typeName + '?')) {
+            return false;
+        }
+        var id = link.getAttribute('data-id');
+        var deleteUrl = window.location.origin + link.getAttribute('data-delete-url');
+        fetch(deleteUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            credentials: 'same-origin'
+        }).then(function (resp) {
+            return resp.json();
+        }).then(function (data) {
+            var msg = document.getElementById('ajax-message');
+            if (!msg) {
+                msg = document.createElement('div');
+                msg.id = 'ajax-message';
+                msg.style.marginBottom = '1rem';
+                document.querySelector('.container').prepend(msg);
+            }
+            var div = document.createElement('div');
+            div.style.padding = '0.75rem';
+            div.style.borderRadius = '4px';
+            div.style.marginBottom = '1rem';
+            if (data.success) {
+                div.style.background = '#d4edda';
+                div.style.color = '#155724';
+                div.textContent = data.message;
+                setTimeout(function () { location.reload(); }, 800);
+            } else {
+                div.style.background = '#f8d7da';
+                div.style.color = '#721c24';
+                div.textContent = data.message;
+            }
+            msg.appendChild(div);
+            setTimeout(function () { div.remove(); }, 5000);
+        }).catch(function (err) {
+            var msg = document.getElementById('ajax-message') || document.body;
+            var div = document.createElement('div');
+            div.style.background = '#f8d7da';
+            div.style.color = '#721c24';
+            div.style.padding = '0.75rem';
+            div.textContent = 'Ошибка при удалении: ' + err;
+            msg.appendChild(div);
+        });
+        return false;
+    }
+
     connectWebSocket();
 </th:block>
 

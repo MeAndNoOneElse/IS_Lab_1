@@ -91,8 +91,7 @@
             <td class="actions">
                 <a class="btn" th:href="@{/bookcreatures/{id}(id=${item.id})}">Просмотр</a>
                 <a class="btn" th:href="@{/bookcreatures/{id}/edit(id=${item.id})}">Изменить</a>
-                <a class="btn btn-danger" th:href="@{/bookcreatures/{id}/delete(id=${item.id})}"
-                   onclick="return confirmDelete(this, 'Существо', ${item.id})">Удалить</a>
+                <a class="btn btn-danger" href="#" th:data-delete-url="@{/bookcreatures/{id}/delete-ajax(id=${item.id})}" th:data-id="${item.id}" onclick="return confirmDelete(this, 'Существо')">Удалить</a>
             </td>
         </tr>
         </tbody>
@@ -110,11 +109,12 @@
 </div>
 <script th:insert="~{_menu :: ws-client}"></script>
 <script>
-    function confirmDelete(link, typeName, id) {
+    function confirmDelete(link, typeName) {
         if (!confirm('Удалить ' + typeName + '?')) {
             return false;
         }
-        var deleteUrl = window.location.origin + '/bookcreatures/' + id + '/delete-ajax';
+        var deleteUrl = link.getAttribute('data-delete-url');
+        var id = link.getAttribute('data-id');
         fetch(deleteUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

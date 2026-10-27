@@ -20,8 +20,8 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker // включает поддержку STOMP-брокера сообщений
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    /** Разрешённые источники для WebSocket — "*" означает, что соединиться можно с любого домена (для разработки). */
-    private static final String[] ALLOWED_ORIGINS = {"*"};
+    /** Разрешённые источники для WebSocket — ограничено источником приложения (безопаснее, чем "*"). */
+    private static final String[] ALLOWED_ORIGINS = {"http://localhost:8080"};
 
     /**
      * Регистрирует STOMP-ендпоинт {@code /ws}, по которому клиенты устанавливают WebSocket-соединение.

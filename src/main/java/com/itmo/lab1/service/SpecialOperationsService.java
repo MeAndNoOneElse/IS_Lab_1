@@ -13,7 +13,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Вызов 5 специальных операций, реализованных как pl/pgsql-функции в БД.
+ * Вызов 5 специальных операций, реализованных как PL/pgSQL-функции в базе данных
+ * (схема {@code s465029}). Операции не вписываются в обычный CRUD и выполняются
+ * через нативные SQL-запросы через {@link EntityManager}.
+ * <p>
+ * Каждая операция возвращает {@link SpecialOpResultDto} с кодом операции, данными
+ * и человекочитаемым сообщением для отображения на странице {@code special/operations}.
  */
 @Service
 @Transactional
@@ -32,7 +37,9 @@ public class SpecialOperationsService {
     }
 
     /**
-     * 1. Сумма attackLevel всех объектов.
+     * 1. Сумма уровней атаки всех существ.
+     * Вызывает PL/pgSQL-функцию {@code s465029.sum_attack_level()}.
+     * Возвращает {@link SpecialOpResultDto} с числом — суммой всех attackLevel.
      */
     public SpecialOpResultDto sumAttackLevel() {
         Number sum = (Number) em.createNativeQuery(
@@ -42,7 +49,9 @@ public class SpecialOperationsService {
     }
 
     /**
-     * 2. Существа, имя которых начинается с заданной подстроки.
+     * 2. Существа, чьё имя начинается с заданной подстроки (регистронезависимо).
+     * Вызывает PL/pgSQL-функцию {@code s465029.find_by_name_substring(?)} с параметром подстроки.
+     * Каждая строка результата преобразуется в {@link BookCreatureListDto} через {@link #mapRow}.
      */
     @Transactional(readOnly = true)
     public SpecialOpResultDto findByNameSubstring(String substring) {
@@ -57,7 +66,9 @@ public class SpecialOperationsService {
     }
 
     /**
-     * 3. Уникальные значения attackLevel.
+     * 3. Уникальные значения уровней атаки всех существ.
+     * Вызывает PL/pgSQL-функцию {@code s465029.unique_attack_levels()}.
+     * Возвращает список целых чисел — уникальные attackLevel.
      */
     public SpecialOpResultDto uniqueAttackLevels() {
         List<Integer> levels = em.createNativeQuery(
@@ -67,7 +78,11 @@ public class SpecialOperationsService {
     }
 
     /**
-     * 4. Обмен кольцами между двумя персонажами по id.
+     * 4. Обмен кольцами местами между двумя существами по их ID ({@code id1} и {@code id2}).
+     * Вызывает PL/pgSQL-функцию {@code s465029.swap_rings(?, ?)}.
+     * Функция void — не возвращает строк, поэтому {@code getSingleResult()} бросает
+     * {@code NoResultException}, который перехватывается и игнорируется (ожидаемое поведение).
+     * После выполнения рассылается WebSocket-уведомление.
      */
     public SpecialOpResultDto swapRings(Long id1, Long id2) {
         // void-функция не возвращает строк — getSingleResult бросит NoResultException, ловим его.
@@ -85,12 +100,18 @@ public class SpecialOperationsService {
                 "Обмен кольцами выполнен успешно", true);
     }
 
+    /**
+     * Отправляет всем подключённым WebSocket-клиентам уведомление об изменении данных.
+     */
     private void broadcast() {
         broadcaster.broadcastCreatureChanged();
     }
 
     /**
-     * 5. Уничтожить города эльфов.
+     * 5. Уничтожить все города, правителями которых являются эльфы.
+     * Вызывает PL/pgSQL-функцию {@code s465029.destroy_elf_cities()}.
+     * Функция возвращает количество удалённых городов.
+     * После выполнения рассылается WebSocket-уведомление.
      */
     public SpecialOpResultDto destroyElfCities() {
         Number count = (Number) em.createNativeQuery(
@@ -100,6 +121,11 @@ public class SpecialOperationsService {
                 "Уничтожено городов эльфов: " + count, true);
     }
 
+    /**
+     * Преобразует одну строку результата нативного SQL-запроса (массив {@code Object[]})
+     * в {@link BookCreatureListDto}.
+     * Обрабатывает возможные {@code null} значения в колонках возраста, типа и уровня атаки.
+     */
     private BookCreatureListDto mapRow(Object[] row) {
         BookCreatureListDto dto = new BookCreatureListDto();
         dto.setId(((Number) row[0]).longValue());

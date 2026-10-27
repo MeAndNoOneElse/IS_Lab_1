@@ -14,9 +14,11 @@ public class BookCreatureListDto {
     private Integer age;
     private String creatureType;
     private String creatureLocation; // имя города
+    private Long creatureLocationId; // id города
     private Integer attackLevel;
     private Float defenseLevel;
     private String ring; // имя кольца
+    private Long ringId; // id кольца
 
     public BookCreatureListDto() {
     }
@@ -77,6 +79,14 @@ public class BookCreatureListDto {
         this.creatureLocation = creatureLocation;
     }
 
+    public Long getCreatureLocationId() {
+        return creatureLocationId;
+    }
+
+    public void setCreatureLocationId(Long creatureLocationId) {
+        this.creatureLocationId = creatureLocationId;
+    }
+
     public Integer getAttackLevel() {
         return attackLevel;
     }
@@ -99,6 +109,14 @@ public class BookCreatureListDto {
 
     public void setRing(String ring) {
         this.ring = ring;
+    }
+
+    public Long getRingId() {
+        return ringId;
+    }
+
+    public void setRingId(Long ringId) {
+        this.ringId = ringId;
     }
 
     @Override

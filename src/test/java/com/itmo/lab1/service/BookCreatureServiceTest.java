@@ -11,8 +11,8 @@ import com.itmo.lab1.entity.MagicCity;
 import com.itmo.lab1.entity.Ring;
 import com.itmo.lab1.exception.EntityNotFoundException;
 import com.itmo.lab1.exception.ReferencedEntityException;
+import com.itmo.lab1.mapper.BookCreatureMapper;
 import com.itmo.lab1.repository.BookCreatureRepository;
-import com.itmo.lab1.repository.CoordinatesRepository;
 import com.itmo.lab1.repository.MagicCityRepository;
 import com.itmo.lab1.repository.RingRepository;
 import com.itmo.lab1.websocket.ChangeBroadcaster;
@@ -38,11 +38,13 @@ class BookCreatureServiceTest {
     @Mock
     private BookCreatureRepository creatureRepository;
     @Mock
-    private CoordinatesRepository coordinatesRepository;
+    private CoordinateService coordinateService;
     @Mock
     private MagicCityRepository magicCityRepository;
     @Mock
     private RingRepository ringRepository;
+    @Mock
+    private BookCreatureMapper mapper;
     @Mock
     private ChangeBroadcaster broadcaster;
 
@@ -50,8 +52,8 @@ class BookCreatureServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new BookCreatureService(creatureRepository, coordinatesRepository,
-                magicCityRepository, ringRepository, broadcaster);
+        service = new BookCreatureService(creatureRepository, coordinateService,
+                magicCityRepository, ringRepository, mapper, broadcaster);
     }
 
     private BookCreatureDto newDto() {
@@ -71,26 +73,32 @@ class BookCreatureServiceTest {
 
     @Test
     void createShouldSaveCreatureCoordinatesAndBroadcast() {
+        when(mapper.toEntity(any(BookCreatureDto.class))).thenReturn(new BookCreature());
+        when(coordinateService.resolve(any(CoordinatesDto.class))).thenAnswer(invocation -> {
+            CoordinatesDto cd = invocation.getArgument(0);
+            Coordinates c = new Coordinates(cd.getX(), cd.getY());
+            c.setId(5L);
+            return c;
+        });
         when(creatureRepository.save(any(BookCreature.class))).thenAnswer(invocation -> {
             BookCreature creature = invocation.getArgument(0);
             creature.setId(42L);
             return creature;
         });
-        when(coordinatesRepository.save(any(Coordinates.class))).thenAnswer(invocation -> {
-            Coordinates coords = invocation.getArgument(0);
-            coords.setId(5L);
-            return coords;
+        when(mapper.toListDto(any(BookCreature.class))).thenAnswer(invocation -> {
+            BookCreature c = invocation.getArgument(0);
+            BookCreatureListDto dto = new BookCreatureListDto();
+            dto.setId(c.getId());
+            dto.setName(c.getName());
+            return dto;
         });
 
         BookCreatureListDto result = service.create(newDto());
 
         assertEquals(42L, result.getId());
         assertEquals("Frodo", result.getName());
-        assertEquals(30, result.getAge());
-        assertNotNull(result.getCoordinates());
-        assertEquals(10L, result.getCoordinates().getX());
         verify(creatureRepository).save(any(BookCreature.class));
-        verify(coordinatesRepository).save(any(Coordinates.class));
+        verify(coordinateService).resolve(any(CoordinatesDto.class));
         verify(broadcaster).broadcastCreatureChanged();
     }
 
@@ -129,6 +137,13 @@ class BookCreatureServiceTest {
         ring.setId(7L);
         when(creatureRepository.findByIdWithRelations(1L)).thenReturn(creature);
         when(ringRepository.findById(7L)).thenReturn(ring);
+        when(mapper.toListDto(any(BookCreature.class))).thenAnswer(invocation -> {
+            BookCreature c = invocation.getArgument(0);
+            BookCreatureListDto dto = new BookCreatureListDto();
+            dto.setId(c.getId());
+            dto.setName(c.getName());
+            return dto;
+        });
 
         BookCreatureDto dto = newDto();
         dto.setRingId(7L);
