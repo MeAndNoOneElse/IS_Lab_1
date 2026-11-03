@@ -9,10 +9,10 @@ public class CoordinatesDto {
 
     private Long id;
 
-    @Min(value = 1, message = "Координата X должна быть больше 0")
+    //@Min(value = 1, message = "Координата X должна быть больше 0")
     private Long x;
 
-    @Min(value = 1, message = "Координата Y должна быть больше 0")
+   // @Min(value = 1, message = "Координата Y должна быть больше 0")
     private Long y;
 
     public CoordinatesDto() {

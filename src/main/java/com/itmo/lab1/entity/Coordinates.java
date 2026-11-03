@@ -22,11 +22,11 @@ public class Coordinates {
     private Long id;
 
     @Column(name = "x", nullable = false)
-    @Min(value = 1, message = "Координата X должна быть больше 0")
+    //@Min(value = 1, message = "Координата X должна быть больше 0")
     private Long x;
 
     @Column(name = "y", nullable = false)
-    @Min(value = 1, message = "Координата Y должна быть больше 0")
+    //@Min(value = 1, message = "Координата Y должна быть больше 0")
     private Long y;
 
     @OneToOne(mappedBy = "coordinates")
